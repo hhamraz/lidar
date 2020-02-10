@@ -17,7 +17,7 @@ def rotatedCoordinatePt_deg(x, y, ang):
 
 def rotateCoordSys(data, ang, unit ='D'):
 	if unit == 'D': ang = math.radians(ang)
-	elif not unit == 'R': print "Unrecognized unit for angle:", unit
+	elif not unit == 'R': print("Unrecognized unit for angle:", unit)
 	cosine = math.cos(ang)
 	sine = math.sin(ang)
 	for p in data:
@@ -165,4 +165,16 @@ def findOutliers(data, dispersement):
 		elif p > rb: r_outliers.append(i)
 	return l_outliers, r_outliers
 	
-	
+def cellsEncompassedByPolygon(poly):
+	start_x = int(poly.bounds[0])
+	start_y = int(poly.bounds[1])
+	end_x = int(math.ceil(poly.bounds[2]))
+	end_y = int(math.ceil(poly.bounds[3]))
+	cells = []
+	for i in range(start_x, end_x+1):
+		for j in range(start_y, end_y+1):
+			if poly.distance(Point((i, j))) == 0:
+				cells.append((i, j))
+	return cells
+
+

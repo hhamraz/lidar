@@ -2,7 +2,6 @@ import shapefile
 import itertools
 from operator import itemgetter
 from liblas import file as lasfile
-from lib.constants import *
 import numpy
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -33,7 +32,7 @@ class LASPoint:
 		self.smoothed_height = 0.0
 		self.marked = False
 
-def loadLAS(fpath, length_scale, eligible_classes = set([GROUND1, GROUND2, LOW_VEG, MED_VEG, HIGH_VEG])):
+def loadLAS(fpath, length_scale, eligible_classes):
 	def convertToLASPoint(p):
 		lp = LASPoint()
 		lp.x = p.x * length_scale
@@ -57,7 +56,7 @@ def loadLAS(fpath, length_scale, eligible_classes = set([GROUND1, GROUND2, LOW_V
 	fin.close()
 	return cloud
 
-def loadCSV(fpath, length_scale, eligible_classes = set([GROUND1, GROUND2, LOW_VEG, MED_VEG, HIGH_VEG]), skip_header=True):
+def loadCSV(fpath, length_scale, eligible_classes, skip_header=True):
 	def decodeToLASPoint(csl):
 		tokens = csl.split(',')
 		lp = LASPoint()
@@ -94,27 +93,6 @@ def loadCSV(fpath, length_scale, eligible_classes = set([GROUND1, GROUND2, LOW_V
 #######################
 # Screen, Visualization, and Disk Output
 #######################
-
-def printBasicStats(cloud):
-	ptNum = len(cloud)
-	gr1c = gr2c = unassc = lvc = mvc = hvc = noc = 0
-	for p in cloud:
-		if p.classification == HIGH_VEG: hvc += 1
-		elif p.classification == MED_VEG: mvc +=1
-		elif p.classification == LOW_VEG: lvc += 1
-		elif p.classification == GROUND1: gr1c += 1
-		elif p.classification == GROUND2: gr2c += 1
-		elif p.classification == UNASSIGNED: unassc += 1
-		elif p.classification == NOISE: noc += 1
-		else: print("Unrecognized Class:", p.classification)
-	print("Total Points:\t", ptNum)
-	print("High Veg:\t", hvc, '\t', 100.0 *hvc /ptNum, '%')
-	print("Medium Veg:\t", mvc, '\t', 100.0 *mvc /ptNum, '%')
-	print("Low Veg:\t", lvc, '\t', 100.0 *lvc /ptNum, '%')
-	print("ground 1:\t", gr1c, '\t', 100.0 *gr1c /ptNum, '%')
-	print("Ground 2:\t", gr2c, '\t', 100.0 *gr2c /ptNum, '%')
-	print("Unassigned:\t", unassc, '\t', 100.0 *unassc /ptNum, '%')
-	print("Noise:\t", noc, '\t', 100.0 *noc /ptNum, '%')
 
 def scatterPlotClusters(clstrs, popup=True, fname="clusters.png"):
 	colors = ["green", "red", "blue", "lime", "orange", "yellow",  
@@ -168,12 +146,14 @@ def writeClustersShapeFile(clstrs, length_scale, fpath):
 	w.field('userData', 'N', 3)
 	w.field('SourceID', 'N', 4)
 	w.field('Height', 'F', 6, 3)
+	w.field('Stratum', 'N', 2)
 	w.field('Label', 'N', 8)
-	for i, cl in enumerate(clstrs):
-		for p in cl:
-			w.point(p.x * length_scale, p.y * length_scale, p.z * length_scale)
-			w.record(p.x * length_scale, p.y * length_scale, p.z * length_scale, 
-				p.intensity, p.return_number, p.number_of_returns, 
-				p.scan_direction==1, p.flightline_edge==1, p.classification, 
-				p.scan_angle, p.user_data, p.point_source_id, p.height * length_scale, i+1)
+	for i, layer in enumerate(clstrs):
+		for j, cl in enumerate(layer):
+			for p in cl:
+				w.point(p.x * length_scale, p.y * length_scale, p.z * length_scale)
+				w.record(p.x * length_scale, p.y * length_scale, p.z * length_scale, 
+					p.intensity, p.return_number, p.number_of_returns, 
+					p.scan_direction==1, p.flightline_edge==1, p.classification, 
+					p.scan_angle, p.user_data, p.point_source_id, p.height * length_scale, i+1, j+1)
 	w.save(fpath)

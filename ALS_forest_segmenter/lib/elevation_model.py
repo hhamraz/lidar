@@ -1,8 +1,16 @@
 from operator import attrgetter
-import numpy
+import numpy, math
 
-from lib.constants import *
 import lib.geometry as geometry
+
+# Values for the Attribute "classification"
+UNASSIGNED = 1
+GROUND1 = 2
+GROUND2 = 8
+LOW_VEG = 3
+MED_VEG = 4
+HIGH_VEG = 5
+NOISE = 7
 
 # Module-Specific Constants
 TREE_VEG_HEIGHT_THRESHOLD = 3.0 # meters
@@ -16,6 +24,19 @@ DEM_INTERPOLATION_CELL_NUM = 6 # taken from HORIZONTAL_FOOTPRINT * 3. / EM_CELL_
 ####################################
 # Elevation Modeling
 ####################################
+
+def cloudStats(cloud):
+	stat = {'ground1':0, 'ground2':0, 'low_veg':0, 'med_veg':0, 'high_veg':0, 'unassigned':0, 'noise':0}
+	for p in cloud:
+		if p.classification == HIGH_VEG: stat['high_veg'] += 1
+		elif p.classification == MED_VEG: stat['med_veg'] += 1
+		elif p.classification == LOW_VEG: stat['low_veg'] += 1
+		elif p.classification == GROUND1: stat['ground1'] += 1
+		elif p.classification == GROUND2: stat['ground2'] += 1
+		elif p.classification == UNASSIGNED: stat['unassigned'] += 1
+		elif p.classification == NOISE: stat['noise'] += 1
+		else: print("Unrecognized Class:", p.classification)
+	return stat
 
 def measureConvexPointDensity(grid):
 	points = extractPointCloud(grid)
@@ -103,3 +124,14 @@ def indexPointCloud(cld, calc_veg_h=True):
 	return grid
 
 
+def getPortionCloud(grid, coords, surface=False):
+	points = []
+	if surface:
+		for i, j in coords: 
+			if grid[i][j] != None:
+				points.append(grid[i][j][0])
+	else:
+		for i, j in coords: 
+			if grid[i][j] != None:
+				points.extend(grid[i][j])
+	return points
