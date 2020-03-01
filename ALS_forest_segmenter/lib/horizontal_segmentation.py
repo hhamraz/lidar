@@ -1,4 +1,5 @@
 import math, numpy, sys
+from skimage.morphology import watershed
 from operator import itemgetter
 import lib.geometry as geometry
 import lib.elevation_model as dem
@@ -294,7 +295,7 @@ def watershedDelineate(grd, trs, noise):
 	markers = numpy.zeros((len(grd), len(grd[0])), dtype=numpy.uint16)
 	min_veg_elevation = sys.float_info.max
 	for idx, tr in enumerate(trs):
-		crwn = getPointCloud(grd, tr)
+		crwn = dem.getPortionCloud(grd, tr)
 		for pt in crwn:
 			markers[pt.grid_row][pt.grid_column] = idx+1
 		minElv = min(crwn, key=lambda x: x.z).z

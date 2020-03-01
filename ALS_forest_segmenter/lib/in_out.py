@@ -94,7 +94,7 @@ def loadCSV(fpath, length_scale, eligible_classes, skip_header=True):
 # Screen, Visualization, and Disk Output
 #######################
 
-def scatterPlotClusters(clstrs, popup=True, fname="clusters.png"):
+def scatterPlotClusters(clstrs, fname=None, title="Segmentation"):
 	colors = ["green", "red", "blue", "lime", "orange", "yellow",  
 		"cyan", "magenta", "brown", "pink", "maroon", "teal", 
 		"orangered", "olive", "chocolate", "rosybrown", "purple", "indigo", 
@@ -110,7 +110,10 @@ def scatterPlotClusters(clstrs, popup=True, fname="clusters.png"):
 			y.append(p.y)
 		plt.scatter(x, y, color = next(colCycle))
 	plt.axis('equal')
-	if popup: plt.show()
+	plt.xlabel("X (m)")
+	plt.ylabel("Y (m)")
+	plt.title(title)
+	if fname == None: plt.show()
 	else: plt.savefig(fname)
 	plt.clf()
 
@@ -131,7 +134,7 @@ def  appendToFile(s, fpath):
 	fout.close()
 
 def writeClustersShapeFile(clstrs, length_scale, fpath):
-	w = shapefile.Writer(shapefile.POINT)
+	w = shapefile.Writer(fpath, shapeType=shapefile.POINT)
 	w.autoBalance = 1 #ensures gemoetry and attributes match
 	w.field('X', 'F', 12, 3)
 	w.field('Y', 'F', 12, 3)
@@ -151,9 +154,9 @@ def writeClustersShapeFile(clstrs, length_scale, fpath):
 	for i, layer in enumerate(clstrs):
 		for j, cl in enumerate(layer):
 			for p in cl:
-				w.point(p.x * length_scale, p.y * length_scale, p.z * length_scale)
-				w.record(p.x * length_scale, p.y * length_scale, p.z * length_scale, 
+				w.point(p.x / length_scale, p.y / length_scale)
+				w.record(p.x / length_scale, p.y / length_scale, p.z / length_scale, 
 					p.intensity, p.return_number, p.number_of_returns, 
 					p.scan_direction==1, p.flightline_edge==1, p.classification, 
-					p.scan_angle, p.user_data, p.point_source_id, p.height * length_scale, i+1, j+1)
-	w.save(fpath)
+					p.scan_angle, p.user_data, p.point_source_id, p.height / length_scale, i+1, j+1)
+	w.close()
